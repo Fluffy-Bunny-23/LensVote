@@ -35,17 +35,21 @@ async function postJSON(url, data) {
 // Admin page logic
 async function loadStats() {
   try {
-    const data = await fetchJSON('/api/images');
+    // respect selected set in admin UI
+    const setSelect = document.getElementById('set-select');
+    const setParam = setSelect?.value ? ('?set=' + encodeURIComponent(setSelect.value)) : '';
+    const data = await fetchJSON('/api/images' + setParam);
     const tbody = document.querySelector('#stats-table tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
     for (const img of data.images) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><img src="${img.url}" alt=""></td>
-        <td>${img.filename}</td>
-        <td>${img.avg_rating?.toFixed(2) ?? '-'}<\/td>
-        <td>${img.rating_count}<\/td>
+  <td><img src="${img.url}" alt=""></td>
+  <td>${img.filename}</td>
+  <td>${img.set_name ? `<span class="muted">${img.set_name}</span>` : ''}</td>
+  <td>${img.avg_rating?.toFixed(2) ?? '-'}<\/td>
+  <td>${img.rating_count}<\/td>
         <td>
           <button class="hide-photo" data-id="${img.id}" style="background:#ecc94b; color:#222;">${img.hidden ? 'Unhide' : 'Hide'}</button>
           <button class="delete-photo" data-id="${img.id}" style="background:#e53e3e; color:white;">Delete</button>
@@ -85,6 +89,9 @@ async function handleUpload(e) {
   if (!files || !files.length) return;
   const fd = new FormData();
   for (const f of files) fd.append('photos', f);
+  // include selected set
+  const setSel = document.getElementById('set-select');
+  if (setSel && setSel.value) fd.append('set', setSel.value);
   const status = document.getElementById('upload-status');
   status.textContent = 'Uploading...';
   const res = await fetch('/upload', { method: 'POST', body: fd });
@@ -102,12 +109,32 @@ async function loadGallery() {
   const nameInput = document.getElementById('rater-name');
   if (nameInput) nameInput.value = getName();
   await populateUserDropdown();
+  // populate gallery set selector
+  const gallerySet = document.getElementById('gallery-set-select');
+  if (gallerySet && !gallerySet.dataset.loaded) {
+    try {
+      const data = await fetchJSON('/api/sets');
+      gallerySet.innerHTML = '';
+      for (const s of data.sets) {
+        const opt = document.createElement('option');
+        opt.value = s.slug;
+        opt.textContent = s.name;
+        gallerySet.appendChild(opt);
+      }
+      gallerySet.dataset.loaded = '1';
+      gallerySet.onchange = () => loadGallery();
+    } catch (e) {
+      console.error('Failed to load gallery sets', e);
+    }
+  }
 
   const sortBy = document.getElementById('sort-by').value;
   const topFilter = parseInt(document.getElementById('top-filter').value || '0', 10);
 
   const name = encodeURIComponent(getName());
   let url = '/api/images?include_user_rating=1';
+  const gallerySetSel = document.getElementById('gallery-set-select');
+  if (gallerySetSel && gallerySetSel.value) url += '&set=' + encodeURIComponent(gallerySetSel.value);
   if (name) url += '&user=' + name;
   const data = await fetchJSON(url);
   let images = data.images;
@@ -282,6 +309,123 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('refresh-stats')?.addEventListener('click', loadStats);
     document.getElementById('load-top')?.addEventListener('click', loadTop);
     loadStats();
+
+    // load sets for admin
+    async function loadSets() {
+      const sel = document.getElementById('set-select');
+      if (!sel) return;
+      sel.innerHTML = '';
+      try {
+        const data = await fetchJSON('/api/sets');
+        for (const s of data.sets) {
+          const opt = document.createElement('option');
+          opt.value = s.slug;
+          opt.textContent = `${s.name} (${s.image_count || 0})`;
+          opt.dataset.slug = s.slug;
+          opt.dataset.id = s.id;
+          opt.dataset.count = s.image_count || 0;
+          sel.appendChild(opt);
+        }
+        // ensure default selected
+        if (!sel.value && sel.options.length) sel.value = sel.options[0].value;
+        // update UI controls based on selected option (disable rename/delete for default)
+        function updateSetControls() {
+          const opt = sel.selectedOptions[0];
+          const renameBtn = document.getElementById('rename-set');
+          const deleteBtn = document.getElementById('delete-set');
+          const uploadField = document.getElementById('upload-set-field');
+          // allow renaming default, but do not allow deleting it
+          const isDefault = opt && opt.dataset && opt.dataset.slug === 'default';
+          if (renameBtn) renameBtn.disabled = false;
+          if (deleteBtn) deleteBtn.disabled = isDefault;
+          if (uploadField && opt) uploadField.value = opt.dataset.slug || '';
+        }
+        sel.addEventListener('change', updateSetControls);
+        updateSetControls();
+      } catch (e) {
+        console.error('Failed to load sets', e);
+      }
+    }
+
+    document.getElementById('create-set')?.addEventListener('click', async () => {
+      const nameInput = document.getElementById('new-set-name');
+      const name = nameInput?.value?.trim();
+      if (!name) return alert('Enter a set name');
+      try {
+        const res = await postJSON('/api/sets', { name });
+        await loadSets();
+        // select new set
+        const sel = document.getElementById('set-select');
+        if (sel) sel.value = res.slug;
+        nameInput.value = '';
+      } catch (e) {
+        alert('Failed to create set: ' + e.message);
+      }
+    });
+
+    // initial sets
+    loadSets();
+    // rename/delete handlers
+    document.getElementById('rename-set')?.addEventListener('click', async () => {
+      const sel = document.getElementById('set-select');
+      const input = document.getElementById('new-set-name');
+      if (!sel || !sel.value) return alert('Select a set');
+      const selectedOpt = sel.selectedOptions[0];
+      if (selectedOpt && selectedOpt.dataset && selectedOpt.dataset.slug === 'default') return alert('Cannot rename the default set');
+      // prefer inline input; if empty, prompt the user
+      let name = input?.value?.trim();
+      if (!name) {
+        name = prompt('Enter a new name for the selected set:','');
+        if (!name) {
+          // focus the inline input so the user can type
+          input?.focus();
+          return;
+        }
+        input.value = name;
+      }
+      try {
+        // need set id: fetch sets list and find matching slug
+        const data = await fetchJSON('/api/sets');
+        const s = data.sets.find(x => x.slug === sel.value);
+        if (!s) return alert('Set not found');
+        const res = await postJSON('/api/sets/' + s.id + '/rename', { name });
+        await loadSets();
+        // select new slug
+        sel.value = res.slug;
+        input.value = '';
+      } catch (e) {
+        alert('Rename failed: ' + e.message);
+      }
+    });
+    document.getElementById('delete-set')?.addEventListener('click', async () => {
+      const sel = document.getElementById('set-select');
+      if (!sel || !sel.value) return alert('Select a set');
+      const selectedOpt = sel.selectedOptions[0];
+      if (selectedOpt && selectedOpt.dataset && selectedOpt.dataset.slug === 'default') return alert('Cannot delete the default set');
+      // determine count for selected option
+      const count = selectedOpt?.dataset?.count || 0;
+      if (!confirm(`Delete this set and its ${count} images? This cannot be undone.`)) return;
+      try {
+        const s = { id: opt.dataset.id, slug: opt.dataset.slug };
+        const res = await postJSON('/api/sets/' + s.id + '/delete', {});
+        await loadSets();
+        loadStats();
+      } catch (e) {
+        alert('Delete failed: ' + e.message);
+      }
+    });
+
+    document.getElementById('normalize-default')?.addEventListener('click', async () => {
+      if (!confirm('Move bare files into uploads/default/ and update DB? This will move files on disk.')) return;
+      try {
+        const res = await postJSON('/api/migrate/normalize_default', {});
+        alert(`Moved ${res.moved.length} files, updated ${res.updated_ids.length} DB rows, missing: ${res.missing.length}`);
+        await loadSets();
+        loadStats();
+      } catch (e) {
+        alert('Normalization failed: ' + e.message);
+      }
+    });
 
     // Remove all votes
     document.getElementById('remove-votes')?.addEventListener('click', async () => {

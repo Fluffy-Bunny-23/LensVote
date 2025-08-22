@@ -2,8 +2,19 @@
 {% block content %}
 <section class="card">
   <h2>Upload Photos</h2>
+  <div style="display:flex; gap:1rem; align-items:center; margin-bottom:0.5rem;">
+    <label>Image Set:
+      <select id="set-select"></select>
+    </label>
+    <button id="rename-set">Rename</button>
+    <button id="delete-set" style="background:#e53e3e; color:white;">Delete Set</button>
+    <input id="new-set-name" placeholder="New set name">
+    <button id="create-set">Create Set</button>
+  <button id="normalize-default" title="Move existing bare files into uploads/default/ and update DB">Normalize Default</button>
+  </div>
   <form id="upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
     <input id="file-input" type="file" name="photos" accept="image/*" multiple>
+    <input type="hidden" name="set" id="upload-set-field" value="default">
     <button type="submit">Upload</button>
   </form>
   <div id="upload-status" class="muted"></div>
@@ -30,7 +41,8 @@
       <tr>
         <th>Preview</th>
         <th>Filename</th>
-        <th>Avg ★</th>
+  <th>Set</th>
+  <th>Avg ★</th>
         <th>Ratings</th>
         <th>Actions</th>
       </tr>
