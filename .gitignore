@@ -1,0 +1,45 @@
+# .gitignore for LensVote
+# Keep empty uploads/ and instance/ directories in the repo using .gitkeep files
+
+# Ignore everything in uploads/ except .gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Ignore everything in instance/ except .gitkeep
+instance/*
+!instance/.gitkeep
+
+# Ignore database file specifically
+instance/family_rater.db
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+
+# Virtualenvs and environment files
+venv/
+env/
+.env
+.Python
+
+# Logs and OS files
+debug.log
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Test cache
+.pytest_cache/
+
+# Swap / temp files
+*.swp
+*~

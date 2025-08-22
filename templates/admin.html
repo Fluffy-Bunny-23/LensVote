@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="card">
+  <h2>Upload Photos</h2>
+  <form id="upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+    <input id="file-input" type="file" name="photos" accept="image/*" multiple>
+    <button type="submit">Upload</button>
+  </form>
+  <div id="upload-status" class="muted"></div>
+</section>
+
+<section class="card">
+  <h2>Stats & Top Picks</h2>
+  <div class="controls">
+    <label>Rating Type:
+      <select id="rating-type">
+        <option value="star">Star Rating</option>
+        <option value="yesno">Yes/No</option>
+      </select>
+    </label>
+    <label>Top:
+      <input id="top-n" type="number" value="5" min="1" step="1" style="width:5rem">
+    </label>
+    <button id="load-top">Show Top</button>
+    <button id="refresh-stats">Refresh All</button>
+  </div>
+
+  <table id="stats-table">
+    <thead>
+      <tr>
+        <th>Preview</th>
+        <th>Filename</th>
+        <th>Avg ★</th>
+        <th>Ratings</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section class="card" style="background:#1a202c; margin-top:2rem;">
+  <h2 style="color:#e53e3e;">Danger Zone & Data</h2>
+  <div class="controls" style="flex-direction:column; align-items:flex-start; gap:1rem;">
+    <button id="remove-votes" style="background:#e53e3e; color:white;">Remove All Votes</button>
+    <button id="delete-all-data" style="background:#e53e3e; color:white;">Delete All Data</button>
+    <button id="download-votes" style="background:#3182ce; color:white;">Download Votes (JSON)</button>
+  </div>
+</section>
+  </div>
+
+  <table id="stats-table">
+    <thead>
+      <tr>
+        <th>Preview</th>
+        <th>Filename</th>
+        <th>Avg ★</th>
+        <th>Ratings</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+{% endblock %}

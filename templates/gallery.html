@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="card">
+  <h2>Rate These Photos</h2>
+  <div class="controls">
+    <label>Your name:
+      <input id="rater-name" type="text" placeholder="e.g., Alex">
+    </label>
+    <button id="save-name">Save</button>
+
+    <label>Set user:
+      <select id="user-dropdown"></select>
+    </label>
+
+    <label>Sort by:
+      <select id="sort-by">
+        <option value="newest">Newest</option>
+        <option value="avg_desc">Highest Avg</option>
+        <option value="count_desc">Most Ratings</option>
+      </select>
+    </label>
+
+    <label>Show Top
+      <input id="top-filter" type="number" min="0" step="1" value="0" style="width:5rem">
+    </label>
+    <button id="apply-filters">Apply</button>
+    <button id="fullscreen-btn" style="margin-left:1rem;">Fullscreen Mode</button>
+  </div>
+
+  <div id="gallery" class="grid"></div>
+  <div id="fullscreen-view" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#111827; z-index:1000; justify-content:center; align-items:center; flex-direction:column;">
+    <div style="width:100vw; display:flex; justify-content:space-between; align-items:center; padding:1rem 2vw; color:#e5e7eb; font-size:1.1rem; position:absolute; top:0; left:0;">
+      <span id="fs-user"></span>
+      <span id="fs-progress"></span>
+    </div>
+    <div style="width:100vw; display:flex; justify-content:center; align-items:center; height:calc(100vh - 220px);">
+      <img id="fs-img" src="" alt="" style="max-width:70vw; max-height:70vh; border-radius:18px; box-shadow:0 0 32px #000; margin-bottom:1.5rem;">
+    </div>
+    <div style="width:100vw; display:flex; justify-content:center; align-items:center;">
+      <div id="fs-stars" style="font-size:2.2rem; margin:1rem 0;"></div>
+      <div id="fs-yesno" style="font-size:2.2rem; margin:1rem 2rem; display:none;">
+        <button id="fs-yes" style="margin-right:1.5rem; padding:.5rem 1.5rem; font-size:1.2rem; background:#22c55e; color:#fff; border:none; border-radius:8px;">Yes</button>
+        <button id="fs-no" style="padding:.5rem 1.5rem; font-size:1.2rem; background:#ef4444; color:#fff; border:none; border-radius:8px;">No</button>
+      </div>
+    </div>
+    <div id="fs-rating" style="font-size:1.3rem; color:#60a5fa; margin-bottom:2rem; text-align:center;"></div>
+    <button id="fs-exit" style="padding:.7rem 2rem; font-size:1.15rem; position:absolute; bottom:2vw; left:50%; transform:translateX(-50%);">Exit Fullscreen</button>
+  </div>
+</section>
+{% endblock %}
