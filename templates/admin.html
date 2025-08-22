@@ -29,6 +29,10 @@
         <option value="yesno">Yes/No</option>
       </select>
     </label>
+    <label>Set:
+      <select id="stats-set-select"></select>
+    </label>
+    <button id="filter-set">Show Set</button>
     <label>Top:
       <input id="top-n" type="number" value="5" min="1" step="1" style="width:5rem">
     </label>
@@ -58,19 +62,5 @@
     <button id="delete-all-data" style="background:#e53e3e; color:white;">Delete All Data</button>
     <button id="download-votes" style="background:#3182ce; color:white;">Download Votes (JSON)</button>
   </div>
-</section>
-  </div>
-
-  <table id="stats-table">
-    <thead>
-      <tr>
-        <th>Preview</th>
-        <th>Filename</th>
-        <th>Avg ★</th>
-        <th>Ratings</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 </section>
 {% endblock %}

@@ -35,13 +35,17 @@ async function postJSON(url, data) {
 // Admin page logic
 async function loadStats() {
   try {
-    // respect selected set in admin UI
-    const setSelect = document.getElementById('set-select');
-    const setParam = setSelect?.value ? ('?set=' + encodeURIComponent(setSelect.value)) : '';
+  // respect selected set in admin UI (stats selector takes precedence)
+  const statsSel = document.getElementById('stats-set-select');
+  const setSelect = document.getElementById('set-select');
+  const sel = statsSel?.value ? statsSel : setSelect;
+  const setParam = sel?.value ? ('?set=' + encodeURIComponent(sel.value)) : '';
     const data = await fetchJSON('/api/images' + setParam);
     const tbody = document.querySelector('#stats-table tbody');
     if (!tbody) return;
-    tbody.innerHTML = '';
+  // remember which set is currently shown
+  tbody.dataset.currentSet = sel?.value || '';
+  tbody.innerHTML = '';
     for (const img of data.images) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -66,7 +70,11 @@ async function loadTop() {
   const tbody = document.querySelector('#stats-table tbody');
   if (!tbody) return;
   try {
-    const data = await fetchJSON('/api/top?limit='+n);
+  // if stats set selector has a value, include it
+  const statsSel = document.getElementById('stats-set-select');
+  const setParam = statsSel?.value ? ('&set=' + encodeURIComponent(statsSel.value)) : '';
+  // ensure we build a valid querystring
+  const data = await fetchJSON('/api/top?limit='+n + setParam);
     tbody.innerHTML = '';
     for (const img of data.images) {
       const tr = document.createElement('tr');
@@ -181,7 +189,7 @@ async function loadGallery() {
         };
       });
       document.getElementById('fullscreen-view').style.display = 'flex';
-      showFSImage(i);
+  showFSImage(i);
       document.body.style.overflow = 'hidden';
     });
     grid.appendChild(card);
@@ -365,6 +373,32 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // initial sets
     loadSets();
+    // populate stats set selector too
+    async function loadStatsSets() {
+      const sel = document.getElementById('stats-set-select');
+      if (!sel) return;
+      sel.innerHTML = '';
+      try {
+        const data = await fetchJSON('/api/sets');
+        for (const s of data.sets) {
+          const opt = document.createElement('option');
+          opt.value = s.slug;
+          opt.textContent = `${s.name} (${s.image_count || 0})`;
+          sel.appendChild(opt);
+        }
+        if (!sel.value && sel.options.length) sel.value = sel.options[0].value;
+      } catch (e) {
+        console.error('Failed to load stats sets', e);
+      }
+    }
+    loadStatsSets();
+  document.getElementById('filter-set')?.addEventListener('click', () => { 
+    // when user clicks Show Set, reload stats for the selected set
+    loadStats();
+    const statsSel = document.getElementById('stats-set-select');
+    const tbody = document.querySelector('#stats-table tbody');
+    if (tbody) tbody.dataset.currentSet = statsSel?.value || '';
+  });
     // rename/delete handlers
     document.getElementById('rename-set')?.addEventListener('click', async () => {
       const sel = document.getElementById('set-select');
@@ -535,6 +569,11 @@ function showFSImage(idx) {
   fsImg.src = img.url;
   fsImg.alt = img.filename;
   fsStars.innerHTML = starHTML(5, img.user_rating || 0);
+  // update filename caption and progress
+  const fsFilename = document.getElementById('fs-filename');
+  if (fsFilename) fsFilename.textContent = img.filename || '';
+  const fsProgress = document.getElementById('fs-progress');
+  if (fsProgress) fsProgress.textContent = `${fsIndex+1} / ${fsImages.length}`;
   fsRating.textContent = img.user_rating ? `Your rating: ${img.user_rating} ★` : 'No rating yet';
   // Show user name and progress
   document.getElementById('fs-user').textContent = `User: ${getName()}`;

@@ -534,6 +534,8 @@ def api_images():
 
     conn = get_db()
     cur = conn.cursor()
+    # optional set filter: accept numeric id or slug via ?set= or ?set_id=
+    set_param = request.args.get('set') or request.args.get('set_id')
     if image_id:
         cur.execute(
             '''
@@ -550,19 +552,52 @@ def api_images():
             ''', (image_id,)
         )
     else:
-        cur.execute(
-            '''
-            SELECT i.id, i.filename, i.created_at,
-                   AVG(r.rating) AS avg_rating,
-                   COUNT(r.id) AS rating_count,
-                   s.name AS set_name, s.slug AS set_slug
-            FROM images i
-            LEFT JOIN ratings r ON r.image_id = i.id
-            LEFT JOIN sets s ON s.id = i.set_id
-            GROUP BY i.id
-            ORDER BY i.id DESC
-            '''
-        )
+        # build a query that optionally filters by set id or slug
+        if set_param:
+            if str(set_param).isdigit():
+                cur.execute(
+                    '''
+                    SELECT i.id, i.filename, i.created_at,
+                           AVG(r.rating) AS avg_rating,
+                           COUNT(r.id) AS rating_count,
+                           s.name AS set_name, s.slug AS set_slug
+                    FROM images i
+                    LEFT JOIN ratings r ON r.image_id = i.id
+                    LEFT JOIN sets s ON s.id = i.set_id
+                    WHERE i.set_id = ?
+                    GROUP BY i.id
+                    ORDER BY i.id DESC
+                    ''', (int(set_param),)
+                )
+            else:
+                cur.execute(
+                    '''
+                    SELECT i.id, i.filename, i.created_at,
+                           AVG(r.rating) AS avg_rating,
+                           COUNT(r.id) AS rating_count,
+                           s.name AS set_name, s.slug AS set_slug
+                    FROM images i
+                    LEFT JOIN ratings r ON r.image_id = i.id
+                    LEFT JOIN sets s ON s.id = i.set_id
+                    WHERE s.slug = ?
+                    GROUP BY i.id
+                    ORDER BY i.id DESC
+                    ''', (set_param,)
+                )
+        else:
+            cur.execute(
+                '''
+                SELECT i.id, i.filename, i.created_at,
+                       AVG(r.rating) AS avg_rating,
+                       COUNT(r.id) AS rating_count,
+                       s.name AS set_name, s.slug AS set_slug
+                FROM images i
+                LEFT JOIN ratings r ON r.image_id = i.id
+                LEFT JOIN sets s ON s.id = i.set_id
+                GROUP BY i.id
+                ORDER BY i.id DESC
+                '''
+            )
     rows = cur.fetchall()
     images = []
     if include_user and user:
@@ -609,21 +644,59 @@ def api_top():
     limit = int(request.args.get('limit', '5'))
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(
-        '''
-        SELECT i.id, i.filename, i.created_at,
-               AVG(r.rating) AS avg_rating,
-               COUNT(r.id) AS rating_count,
-               s.name AS set_name, s.slug AS set_slug
-        FROM images i
-        LEFT JOIN ratings r ON r.image_id = i.id
-        LEFT JOIN sets s ON s.id = i.set_id
-        GROUP BY i.id
-        HAVING rating_count > 0
-        ORDER BY avg_rating DESC, rating_count DESC, i.id DESC
-        LIMIT ?
-        ''', (limit,)
-    )
+    # optional set filter (id or slug)
+    set_param = request.args.get('set') or request.args.get('set_id')
+    if set_param:
+        if str(set_param).isdigit():
+            cur.execute(
+                '''
+                SELECT i.id, i.filename, i.created_at,
+                       AVG(r.rating) AS avg_rating,
+                       COUNT(r.id) AS rating_count,
+                       s.name AS set_name, s.slug AS set_slug
+                FROM images i
+                LEFT JOIN ratings r ON r.image_id = i.id
+                LEFT JOIN sets s ON s.id = i.set_id
+                WHERE i.set_id = ?
+                GROUP BY i.id
+                HAVING rating_count > 0
+                ORDER BY avg_rating DESC, rating_count DESC, i.id DESC
+                LIMIT ?
+                ''', (int(set_param), limit)
+            )
+        else:
+            cur.execute(
+                '''
+                SELECT i.id, i.filename, i.created_at,
+                       AVG(r.rating) AS avg_rating,
+                       COUNT(r.id) AS rating_count,
+                       s.name AS set_name, s.slug AS set_slug
+                FROM images i
+                LEFT JOIN ratings r ON r.image_id = i.id
+                LEFT JOIN sets s ON s.id = i.set_id
+                WHERE s.slug = ?
+                GROUP BY i.id
+                HAVING rating_count > 0
+                ORDER BY avg_rating DESC, rating_count DESC, i.id DESC
+                LIMIT ?
+                ''', (set_param, limit)
+            )
+    else:
+        cur.execute(
+            '''
+            SELECT i.id, i.filename, i.created_at,
+                   AVG(r.rating) AS avg_rating,
+                   COUNT(r.id) AS rating_count,
+                   s.name AS set_name, s.slug AS set_slug
+            FROM images i
+            LEFT JOIN ratings r ON r.image_id = i.id
+            LEFT JOIN sets s ON s.id = i.set_id
+            GROUP BY i.id
+            HAVING rating_count > 0
+            ORDER BY avg_rating DESC, rating_count DESC, i.id DESC
+            LIMIT ?
+            ''', (limit,)
+        )
     rows = cur.fetchall()
     images = [{
         'id': row['id'],
