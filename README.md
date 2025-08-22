@@ -42,15 +42,15 @@ count of ratings, and the top images.
 ## Notes
 - This is deliberately simple and meant for home use. For internet-facing use, add auth and HTTPS.d
 ## To - Do
-[x] Add curent users name to the fullscreen mode
-[x] add how far throught they are in fullscreen mode. e.g. 14/43 (32.6%)
-[] add hide photo for counting button in admin console
-[x] add delete photo and photo data in admin conlole
-[x] add delete all data in admin consle
-[x] move delete buttons and download as json to a differant part of the screen
-[x] make actual image in fullscreen mode look bigger
-[x] adda set user dropdown to go back and change a specific user's votes
-[x] add support for yes no votes as well as star ratings
-[x] make it so that a users ratings appear as soon as they exit fullscreen, not only after page reload
-[] add multi image set funcanality
-[] add pw to admin pannel
+- [x] Add curent users name to the fullscreen mode
+- [x] add how far throught they are in fullscreen mode. e.g. 14/43 (32.6%)
+- [] add hide photo for counting button in admin console
+- [x] add delete photo and photo data in admin conlole
+- [x] add delete all data in admin consle
+- [x] move delete buttons and download as json to a differant part of the screen
+- [x] make actual image in fullscreen mode look bigger
+- [x] adda set user dropdown to go back and change a specific user's votes
+- [x] add support for yes no votes as well as star ratings
+- [x] make it so that a users ratings appear as soon as they exit fullscreen, not only after page reload
+- [] add multi image set funcanality
+- [] add pw to admin pannel
