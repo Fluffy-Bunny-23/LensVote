@@ -5,6 +5,7 @@ Each person’s rating is saved separately (no overwriting others). You can view
 count of ratings, and the top images.
 
 ## Features
+
 - Upload multiple photos (drag/drop or file picker)
 - Simple "What's your name?" prompt saved in browser (localStorage)
 - 1–5 star ratings; each user can rate each photo once (and update their own rating)
@@ -15,33 +16,43 @@ count of ratings, and the top images.
 - SQLite database in `instance/family_rater.db`
 
 ## Quick start
+
 1. Create & activate a virtual environment (recommended).
 2. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
+
 3. Run the server:
+
    ```bash
    python app.py
    ```
+
 4. Open the app:
-   - Admin (upload & stats): http://127.0.0.1:5000/admin
-   - Gallery (family rating page): http://127.0.0.1:5000/gallery
+   - Admin (upload & stats): [localhost:5000/admin](loacalhost:5000/admin)
+   - Gallery (family rating page): [localhost:5000/gallery](loacalhost:5000/gallery)
 
 > Tip: Share the `/gallery` link on your home network so family can rate from their own devices.
 
 ## Config
+
 - `UPLOAD_FOLDER`: defaults to `uploads/`
 - `MAX_CONTENT_LENGTH`: defaults to 30 MB per request
 - Allowed file types: `.jpg .jpeg .png .gif .webp`
 
 ## Backups
+
 - Your images are in `uploads/`.
 - Ratings are in `instance/family_rater.db` (SQLite). Stop the server and copy that file to back up.
 
 ## Notes
+
 - This is deliberately simple and meant for home use. For internet-facing use, add auth and HTTPS.d
+
 ## To - Do
+
 - [x] Add curent users name to the fullscreen mode
 - [x] add how far throught they are in fullscreen mode. e.g. 14/43 (32.6%)
 - [ ] add hide photo for counting button in admin console
